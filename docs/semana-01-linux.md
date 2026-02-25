@@ -43,3 +43,23 @@ vi los logs en journalctl en tiempo real con sudo journalctl -u monitor.service 
 un pequeño experimento en el que mientras corria el servicio y veia los logs maté el proceso con kill -9
 eso hizo que diera un pequeño error y luego automaticamente se reiniciara, diferente a lo que pasaria si lo "matas"
 con systemctl stop
+
+## Sesión 3 — Almacenamiento y rendimiento
+
+### Comandos de disco
+- df -h: espacio usado por filesystem
+- du -sh /*: qué directorio ocupa más
+- iostat -x 1 3: rendimiento del disco, %util es lo importante
+
+### Comandos de memoria
+- free -h: RAM total, usada, disponible
+- Diferencia free vs available: free es RAM vacía, available incluye caché que se puede liberar
+
+### Comandos de CPU
+- top / htop: procesos ordenados por CPU
+- Columnas CPU: us=usuario, sy=kernel, id=idle, wa=esperando disco
+
+### Diagnóstico de un servidor lento
+Al notar un servidor lento lo primero que se debe hacer es top o htop (top preferiblemente para un script,
+htop en general) y matar o investigar procesos sospechosos, luego vemos la RAM con free -h, nos fijamos en
+el available y no en el free y comprobar swap, luego comprobamos disco con iostat nos fijamos en %util y await 
