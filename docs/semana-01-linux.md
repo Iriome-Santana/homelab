@@ -20,3 +20,26 @@ chmod (número) (archivo o directorio)
 
 ## Lo que me costó entender
 Todo lo relacionado a los procesos me costó pillarlo al principio
+
+## Sesión 2 — Systemd y servicios
+
+### Systemd
+Systemd es lo que mantiene vivo todos los servicios de Linux, como cron, ssh, etc... los mantiene vivos y usables.
+
+### Comandos systemctl importantes
+sudo systemctl daemon-reload: systemd relee todos los servicios, obligatorio cuando se añade uno nuevo.
+sudo systemctl enable (servicio): activa el servicio para que se use siempre aunque reinicies el servidor
+sudo systemctl start (servicio): empieza el servicio que seguirá las instrucciones puestas en el .service.
+sudo systemctl stop (servicio): para el servicio de manera premeditada y sin fallos
+sudo systemctl restart (servicio): reinicar el servicio, cambiando también la fecha.
+systemctl status (servicio): ver el estado del servicio en ese momento
+
+### Lo que aprendí sobre logs
+journalctl es el comando para ver los logs del servicio especificado.
+
+### Mi primer servicio
+Hice un servicio de un script básico de monitoreo, lo creé en /opt luego creé el .service lo empecé y
+vi los logs en journalctl en tiempo real con sudo journalctl -u monitor.service -f, luego hice
+un pequeño experimento en el que mientras corria el servicio y veia los logs maté el proceso con kill -9
+eso hizo que diera un pequeño error y luego automaticamente se reiniciara, diferente a lo que pasaria si lo "matas"
+con systemctl stop
