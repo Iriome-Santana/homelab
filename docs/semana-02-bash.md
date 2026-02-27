@@ -25,3 +25,22 @@ awk sirve para sacar las columnas y poder elegir una en concreto por ejemplo: CP
 CPU es igual a el comando de la cpu la parte de CPUs exactamente (awk) el segundo elemento de la columna y con NR puedes elegir la linea exacta de la columna
 ## Lo que me costó entender
 awk al principio me costó un poco, la sintaxis general de Bash es algo que me costó y que sigo aprendiendo
+
+## Sesión 2 — Python para infraestructura
+
+### Por qué Python y no solo Bash
+A veces Bash no es suficiente y Python hace que el script sea más escalable y profundo, Bash sirve para pipes y
+comandos más básicos y Python para más complejos
+
+### subprocess
+Subprocess ejecuta comandos del sistema, sirve para recoger o mostrar datos del sistema en Python
+
+### argparse
+Es más profesional, automático y escalable que los argumentos de Bash, que es algo más rudimentario y para pipes
+algo más básicas
+
+### Output JSON
+JSON es parseable — otras herramientas pueden consumir campos específicos
+con jq, grep o cualquier lenguaje. Con texto plano extraer un valor concreto
+requiere awk complejo. Con JSON es directo: jq '.ram.used'.
+Además es el formato estándar de APIs, dashboards y sistemas de monitoreo.
