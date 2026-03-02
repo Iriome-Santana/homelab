@@ -38,3 +38,25 @@ curl -v realiza una petición a un servidor y muestra información detallada del
 
 ## Lo que me costó entender
 Lo más difícil suele ser diferenciar en qué capa ocurre el problema: si es de DNS, de conexión TCP, de puerto no abierto o de aplicación no funcionando. Entender qué herramienta usar en cada caso y qué significa cada tipo de error requiere práctica y separar claramente resolución de nombres, establecimiento de conexión y respuesta del servicio.
+
+## Sesión 2 — iptables
+
+### Qué es iptables
+Es la herramienta que controla el firewall, es como un portero que decide que entra, que sale y que pasa por
+el servidor
+
+### Las tres cadenas
+Las tres cadenas son INPUT, FORWARD y OUTPUT:
+INPUT se encarga de el tráfico que entra al servidor
+FORWARD del que pasa por el servidor hacia otro destino
+OUTPUT del tráfico que sale del servidor
+
+### Lo que aprendí rompiendo cosas
+Primero añadí una regla DROP a INPUT que SOLO permitía la entrada al servidor por SSH a mi IP, luego añadí una
+una segunda regla DROP que no permitía a nadie entrar por SSH, en ese momento mi conexión por SSh se quedo congelada
+y tuve que abrir la VM original para quitar la regla que prohibía la entrada a cualquier máquina.
+
+### Por qué el orden importa
+El orden importa ya que en mi ejemplo al primero colocar una regla DROP que solo excluía a mi IP pero no la salvaba
+al añadir la segunsa regla DROP que bloqueaba todas las IPs ahí si fue cazada, si primero hubiera hecho
+una regla ACCEPT y luego esa DROP no hubiera pasado nada ya que en orden ya estaba aceptada
