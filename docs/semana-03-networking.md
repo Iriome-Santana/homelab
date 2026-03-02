@@ -84,3 +84,27 @@ nameserver mal configurado y lo arreglo y hago netplan apply
 ### Lo que aprendí rompiendo cosas
 Cambié las adresses de los nameservers para forzar un error de DNS y luego seguí el diagnóstico de DNS roto ya
 explicado paso a paso para llegar a la solución
+
+## Sesión 4 — TLS y certificados
+
+### Qué es un certificado TLS
+TLS es el certificado que hace que http se convierta en https, lo que significa que cifra la información y da una identidad
+para más seguridad, partes importantes del certificado TLS son: Subject que es el dueño del certificado, Issuer que es quien
+lo firma y la cadena de confianza que es como confía tu máquina en ese certificado: No solo confias en el servidor
+si no el servidor tiene el certificado, ese certificado fue firmado (Issuer) por una CA, y esa CA está en la lista
+de autoridades confiables, si la firma tiene una CA todo bien, si no no confía.
+
+### Self-signed vs CA firmado
+Self-signed significa que el certificado del servidor fue firmado por sí mismo, osea no hay una CA detrás que apruebe ese TLS,
+hace que el navegador diga Conexión no segura ya que no confía en ese certificado, mientras CA firmado es cuando una autoridad
+reconocida firma el TLS
+
+### Comandos importantes
+- openssl x509 -text -noout: inspeccionar certificado
+- openssl x509 -checkend 0: verificar si está caducado
+- openssl s_client -connect host:443: conectar y ver el certificado
+
+### Lo que aprendí rompiendo cosas
+con este comando openssl x509 -checkend 0 -noout -in cert.pem veo si mi certificado está caducado, si devuelve 
+Certificate will not expire está correcto si dice Certificate will expire está caducado, luego miro directamente las fechas con:
+echo | openssl s_client -connect midominio.com 2>/dev/null | openssl x509 -noout -dates
