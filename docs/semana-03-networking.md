@@ -60,3 +60,27 @@ y tuve que abrir la VM original para quitar la regla que prohibía la entrada a 
 El orden importa ya que en mi ejemplo al primero colocar una regla DROP que solo excluía a mi IP pero no la salvaba
 al añadir la segunsa regla DROP que bloqueaba todas las IPs ahí si fue cazada, si primero hubiera hecho
 una regla ACCEPT y luego esa DROP no hubiera pasado nada ya que en orden ya estaba aceptada
+
+## Sesión 3 — DNS en profundidad
+
+### Cómo viaja una consulta DNS
+Una consulta va desde tu servidor que la envía al resolver local, que lo manda a los servidores raíz 
+que saben quien gestiona cada extensión, si por ejemplo estás intentando conectarte a google.com se comunican con 
+el servidor .com y de ahí a Google y te devuelven su IP
+
+### Qué es el resolver local
+El resolver local es el proceso sytemd-resolved y es un intermediario entre la red local y la red pública
+el resolver local recibe las consultas DNS del servidor, mira si tiene esa consulta en su caché para
+usarla dierctamente, si no, pergunta a las adresses configuradas en tu netplan y guarda el caché y manda la 
+consulta a los servidores raíz (las adresses de netplan)
+
+### Diagnóstico de DNS roto
+Primero probé a hacer dig a google.com para ver si el DNS estaba correcto, me apareció un error de timed out lo que
+significa que puede que haya un problema de DNS, para probarlo hago un curl a google.com y aparece un error, lo que 
+me dice que hay un problema de DNS o de red, para comprobar a curl a http://8.8.8.8 y funciona lo que
+me garantiza que no es un problema de red y por ende es de DNS, abro el archivo de /etc/netplan/... y encuentro el
+nameserver mal configurado y lo arreglo y hago netplan apply
+
+### Lo que aprendí rompiendo cosas
+Cambié las adresses de los nameservers para forzar un error de DNS y luego seguí el diagnóstico de DNS roto ya
+explicado paso a paso para llegar a la solución
