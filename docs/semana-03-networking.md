@@ -108,3 +108,26 @@ reconocida firma el TLS
 con este comando openssl x509 -checkend 0 -noout -in cert.pem veo si mi certificado está caducado, si devuelve 
 Certificate will not expire está correcto si dice Certificate will expire está caducado, luego miro directamente las fechas con:
 echo | openssl s_client -connect midominio.com 2>/dev/null | openssl x509 -noout -dates
+
+## Día 1 Docker avanzado — Dockerfile multi-stage y optimización
+
+### Por qué optimizar imágenes
+Porque una imagen optimizada ocupa menos en el disco, es más rápido y al optimizar es más escalable y versátil
+
+### Alpine vs Ubuntu
+Alpine es una especie de versión más pequeña de Ubuntu (aunque tiene pequeñas diferencias), es mejor 
+usarla para imágenes que estrictamente tengan que pesar poco y no influya que tipo de OS se use.
+
+### Non-root user
+Es importante correr las imágenes como non-root por seguridad, se debe tener el menor acceso a root posible
+producción
+
+### Multi-stage build
+Hace que las imágenes pesen mucho menos de lo que pesarían de normal, separas la compilación
+del código corriendo as builder y después corres el script, así la imagen final no contiene el compilador ni el
+código fuente.
+
+### Resultados
+- mi-primer-contenedor: 233MB (Ubuntu + bash)
+- mi-contenedor-optimizado: 11.6MB (Alpine + bash)
+- mi-app-go: 22MB (multi-stage, binario Go)
