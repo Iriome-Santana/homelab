@@ -174,3 +174,29 @@ solo pueda leerlas la variable de entorno
 ### .env.example
 El .env.example se usa para dar contexto y enseñar que variables has usado para el proyecto sin mostrar tus
 credenciales reales
+
+## Día 4 Docker avanzado — Docker Hub, inspect y debugging
+
+### Docker Hub
+Es la web donde se guardan las imágenes de Docker y dónde puedes subir imágenes, sirve para tener imágenes que poder 
+usar por ejemplo para que Kubernetes u otros servicios la descarguen. Para hacer y subir una imagen primero la
+buildeas usando tu user de Docker Hub acompañado del nombre, y después hacer docker push de la imagen para
+subirla a Docker Hub
+
+### docker inspect
+docker inspect da la información necesaria de un contenedor para ver sus datos, los más importantes son State Status,
+Config User y Network Settings, se puede buscar especificamente con 
+docker inspect (nombre del contenedor) --format '{{Campo que quieras saber}}'. Por ejemplo: 
+docker inspect proyecto-api-api-1 --format '{{.State.Status}}'
+
+### docker exec
+docker exec sirve para meterte dentro de un contenedor que está corriendo para ver sus datos específicos
+
+### docker stats
+docker stats sirve para ver información en tiempo real de los contenedores activos, sirve por ejemplo si ves que
+un servidor va lento aquí puedes ver cuántos recursos están usando cada contenedor
+
+### Flujo de debugging
+Cuando hay un fallo de algún contenedor lo primero que debes hacer es docker stats, para ver si está o que le pasó,
+si no aparece vas a docker inspect (nombre del contenedor) --format '{{.State.Status}}' para ver que estado aparece,
+si aparece exited vas a docker compose logs para saber exactamente que pasó y al ver el error lo corriges
