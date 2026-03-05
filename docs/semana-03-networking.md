@@ -157,3 +157,20 @@ y para eso se colocan en redes diferentes
 
 ### Por qué Docker Compose funciona sin configurar redes
 Porque Docker Compose automáticamente asigna una red por defecto a cada proyecto para que puedan comunicarse
+
+## Día 3 Docker avanzado — Variables de entorno y secrets
+
+### El problema
+Al hardcodear credenciales se quedan expuestas a que cualquier persona las tenga y las use
+
+### Solución con .env
+Si creas un archivo llamado .env y ahi escribes el nombre de la variable y la credencial después en el compose
+puedes llamar directamente a esa variables sin necesidad de hardcodearla
+
+### La regla de oro
+El .env nunca va al repo, ya que sería contraproducente, haces el .env para que las credenciales no sean públicas y
+solo pueda leerlas la variable de entorno
+
+### .env.example
+El .env.example se usa para dar contexto y enseñar que variables has usado para el proyecto sin mostrar tus
+credenciales reales
