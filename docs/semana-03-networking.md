@@ -131,3 +131,29 @@ código fuente.
 - mi-primer-contenedor: 233MB (Ubuntu + bash)
 - mi-contenedor-optimizado: 11.6MB (Alpine + bash)
 - mi-app-go: 22MB (multi-stage, binario Go)
+
+## Día 2 Docker avanzado — Docker networking
+
+### Tipos de red en Docker
+Hay 3 tipos de red:
+1. bridge: es la red por defecto, donde van los contenedores si no se especifica.
+2. host: es la red que se comparte directamente a la red de la VM, sin ningún aislamiento.
+3. none: es una red sin conexión
+
+### Redes personalizadas
+Una red personañizada se usa para localizar mejor los contenedores por nombre, una red personalizada
+se usa para varias cosas, como poder encontrar los contenedores por nombre, tener mejor organización
+y mejor aislamiento
+
+### Resolución por nombre
+Cuando dos contenedores están dentro de la misma red personalizada de Docker,
+pueden encontrarse por nombre porque Docker crea automáticamente un DNS interno dentro de esa red.
+Ese DNS funciona como un traductor que convierte el nombre del contenedor en su dirección IP interna
+
+### Aislamiento de red
+El aislamiento de red es lo que logras al poner dos contenedores en diferentes redes,
+se usa normalmente por seguridad por ejemplo el frontend no debe poder hablar directamente con la base de datos
+y para eso se colocan en redes diferentes
+
+### Por qué Docker Compose funciona sin configurar redes
+Porque Docker Compose automáticamente asigna una red por defecto a cada proyecto para que puedan comunicarse
