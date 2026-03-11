@@ -1,4 +1,4 @@
-##Fase 03 — EC2 (Lab 1)
+##Fase 03 — EC2 (más Labs)
 
 #Qué es EC2 y por qué es lo primero
 
@@ -117,7 +117,7 @@ Spot:          hasta 90% descuento, AWS puede terminarla sin aviso
 Savings Plans: compromiso de gasto en $/hora, más flexible que Reserved
                cubre EC2, Lambda y Fargate
 
-#Lab 1 — Lo que se construyó
+##Lab 1 — Lo que se construyó
 
 Instancia ec2-public-bastion en public-subnet-1a con sg-public-web y ec2-s3-readonly-role
 Conexión por SSH con devops-key.pem verificada
@@ -170,3 +170,183 @@ Nunca meter Access Keys dentro de una EC2, siempre usar Roles
 El metadata service se usa en scripts de arranque para que la instancia
 sepa en qué entorno está (dev, staging, prod según la AZ o tags)
 Stop para pausar labs, Terminate para limpiar recursos que ya no necesitas
+
+##Lab 2 — User Data
+
+#Qué es User Data
+
+Script bash que se ejecuta automáticamente la primera vez que una instancia arranca.
+La instancia se configura sola sin intervención manual.
+
+#Por qué existe
+En el Lab 1 el flujo fue:
+Lanzar instancia → SSH → instalar nginx manualmente → configurar → salir
+
+Eso funciona para una instancia. Pero si tienes 50 instancias, o si Auto Scaling
+lanza nuevas instancias automáticamente cuando hay carga, no puedes entrar
+por SSH a cada una manualmente.
+
+User Data resuelve esto:
+Lanzar instancia → esperar → ya está configurada y funcionando
+
+#Script usado
+
+#!/bin/bash
+dnf update -y
+dnf install -y nginx
+systemctl start nginx
+systemctl enable nginx
+echo "<h1>Servidor configurado con User Data</h1>" > /usr/share/nginx/html/index.html
+
+#Comportamiento importante
+
+User Data solo se ejecuta UNA vez: la primera vez que la instancia arranca.
+Si apagas y vuelves a encender, no se ejecuta de nuevo.
+El sistema ya está configurado y no necesita repetirlo.
+
+#Lo que se verificó
+
+curl a la IP pública devolvió el HTML personalizado sin haber entrado
+a la instancia por SSH ni una sola vez. Nginx estaba corriendo y configurado
+automáticamente desde el primer arranque.
+
+#Cuándo lo usaría en trabajo real
+
+Configuración inicial de servidores en Auto Scaling Groups
+
+Instalación de agentes de monitorización (CloudWatch Agent, Datadog...)
+
+Registro automático del servidor en sistemas de configuración
+
+Base de cualquier infraestructura inmutable: la instancia nace configurada,
+nunca se modifica manualmente después
+
+##Lab 3 — Instancia en subnet privada
+
+#Qué se demostró
+
+Una instancia en subnet privada no tiene IP pública y no es accesible desde internet.
+Es el aislamiento de red en la práctica.
+
+#Verificaciones realizadas
+
+IP pública:          None          → no existe, no hay forma de llegar desde internet
+
+curl a google.com:   timeout       → no hay salida a internet sin NAT Gateway
+
+curl desde local:    se queda esperando → la IP privada no es enrutable desde internet
+
+#Por qué las subnets privadas existen
+
+Cualquier recurso que no necesite recibir tráfico directamente de internet
+no debería estar expuesto. Mínima superficie de ataque.
+
+Bases de datos, servicios internos, workers de procesamiento → subnet privada.
+
+Servidores web, load balancers → subnet pública.
+
+#Aislamiento completo de la subnet privada
+
+Desde internet → no puede entrar   (sin IP pública)
+Desde dentro   → no puede salir    (sin NAT Gateway)
+Desde el Bastion → sí puede entrar (misma VPC, Security Group permite SSH)
+
+##Lab 4 — Bastion Host
+
+#Por qué no puedes hacer SSH directo a una instancia privada
+
+Dos razones, en orden de importancia:
+
+No tiene IP pública. No hay dirección a la que apuntar desde internet.
+Es como intentar llamar a alguien que no tiene teléfono.
+
+El Security Group no tiene el puerto 22 abierto desde internet.
+
+#Qué es el Bastion Host
+
+Instancia EC2 en subnet pública que actúa como único punto de entrada SSH
+a toda la infraestructura privada.
+
+Tu máquina → SSH → Bastion 10.0.1.x (IP pública, sg-public-web)
+                       │
+                       └→ SSH → ec2-private 10.0.3.x (solo IP privada, sg-app)
+
+#SSH Agent Forwarding
+
+Para el salto en dos pasos la clave .pem no se copia al Bastion.
+
+Se usa SSH Agent Forwarding: el agente SSH de tu máquina local
+presta la clave para ambos saltos sin que salga de tu máquina.
+
+eval $(ssh-agent -s)                    # iniciar el agente SSH
+
+ssh-add ~/.ssh/devops-key.pem           # añadir la clave al agente
+
+ssh -A -i ~/.ssh/devops-key.pem \       # -A activa Agent Forwarding
+  -J ec2-user@IP-BASTION \             # -J define el salto intermedio
+  ec2-user@IP-PRIVADA
+
+#Por qué el Bastion existe en producción real
+
+Es el único punto de entrada SSH a toda la infraestructura
+Solo el puerto 22 del Bastion está abierto a internet, desde IPs concretas
+Todo el acceso SSH pasa por ahí: logs centralizados de quién entró,
+cuándo y a qué máquina
+Si hay un incidente de seguridad, cierras el Bastion y nadie entra a nada
+
+#Lo que se añadió al Security Group
+
+sg-app → Inbound → SSH puerto 22 desde sg-public-web
+
+Solo instancias con sg-public-web (el Bastion) pueden hacer SSH a la instancia privada.
+
+##Lab 5 — IAM Role y boto3 sin credenciales
+
+#Qué es boto3
+
+SDK oficial de AWS para Python. Librería que permite hablar con la API de AWS
+desde código Python sin construir peticiones HTTP manualmente.
+Cualquier cosa que puedes hacer en la consola o con la CLI, puedes hacerla con boto3.
+En DevOps se usa para automatizar: backups, limpieza de recursos, monitorización, despliegues.
+
+#El script
+
+pythonimport boto3
+
+s3 = boto3.client('s3')
+# No se pasan credenciales. boto3 sigue el mismo orden que la CLI:
+# 1. Variables de entorno
+# 2. ~/.aws/credentials
+# 3. IAM Role de la instancia  ← esto es lo que usó
+
+response = s3.list_objects_v2(Bucket='devops-lab-iriome-2026')
+
+for obj in response.get('Contents', []):
+    print(f"  - {obj['Key']}")
+Lo importante — lo que NO se hizo
+No se escribió esto en ningún momento:
+pythons3 = boto3.client('s3',
+    aws_access_key_id='AKIAIOSFODNN7EXAMPLE',
+    aws_secret_access_key='wJalrXUtnFEMI/K7MDENG'
+)
+
+
+No hay credenciales en el código. boto3 las obtuvo automáticamente
+del Role ec2-s3-readonly-role asignado a la instancia.
+AWS genera credenciales temporales para ese Role que expiran cada pocas horas.
+Si alguien entra a la instancia sin autorización y roba el código,
+no hay credenciales que robar. El Role solo funciona desde dentro
+de esta instancia específica.
+
+Esa es la diferencia entre código seguro e inseguro en AWS.
+
+#Bucket S3 creado
+
+aws s3 mb s3://devops-lab-iriome-2026 --region eu-west-1
+
+aws s3 cp prueba.txt s3://devops-lab-iriome-2026/
+
+aws s3 ls s3://devops-lab-iriome-2026/
+
+Nombres de bucket: solo minúsculas, números y guiones. Globales en todo AWS,
+no puede haber dos iguales en el mundo.
